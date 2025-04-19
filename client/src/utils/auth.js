@@ -5,14 +5,19 @@ import decode from "jwt-decode";
 class AuthService {
   // get user data
   getProfile() {
-    return decode(this.getToken());
+    try {
+      return decode(this.getToken());
+    } catch (err) {
+      console.error("Error decoding token:", err);
+      return null;
+    }
   }
 
   // check if user's logged in
   loggedIn() {
     // Checks if there is a saved token and it's still valid
     const token = this.getToken();
-    return !!token && !this.isTokenExpired(token); // handwaiving here
+    return !!token && !this.isTokenExpired(token);
   }
 
   // check if token is expired
@@ -20,10 +25,15 @@ class AuthService {
     try {
       const decoded = decode(token);
       if (decoded.exp < Date.now() / 1000) {
+        // Token is expired - remove it
+        this.logout();
         return true;
-      } else return false;
-    } catch (err) {
+      }
       return false;
+    } catch (err) {
+      // Invalid token format - remove it
+      this.logout();
+      return true;
     }
   }
 
@@ -33,9 +43,18 @@ class AuthService {
   }
 
   login(idToken) {
-    // Saves user token to localStorage
-    localStorage.setItem("id_token", idToken);
-    window.location.assign("/");
+    if (!idToken) return false;
+    try {
+      // Verify token is valid format before saving
+      decode(idToken);
+      // Saves user token to localStorage
+      localStorage.setItem("id_token", idToken);
+      window.location.assign("/");
+      return true;
+    } catch (err) {
+      console.error("Invalid token format:", err);
+      return false;
+    }
   }
 
   logout() {

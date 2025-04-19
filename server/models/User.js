@@ -36,7 +36,9 @@ const userSchema = new Schema(
 userSchema.pre("save", async function (next) {
   if (this.isNew || this.isModified("password")) {
     const saltRounds = 10;
+    console.log("Hashing password for user:", this.email); // Debug log
     this.password = await bcrypt.hash(this.password, saltRounds);
+    console.log("Hashed password:", this.password); // Debug log
   }
 
   next();
@@ -44,6 +46,7 @@ userSchema.pre("save", async function (next) {
 
 // custom method to compare and validate password for logging in
 userSchema.methods.isCorrectPassword = async function (password) {
+  console.log("Comparing:", password, "with hash:", this.password); // Debug log
   return bcrypt.compare(password, this.password);
 };
 
